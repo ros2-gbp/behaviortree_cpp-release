@@ -1,0 +1,27 @@
+ros-lunar-behaviortree-cpp (2.2.0-0stretch) stretch; urgency=high
+
+  * fix typo
+  * method contains() added to BlackBoard
+  * back compatible API change to improve the wrapping of legacy code (issue #15)
+    Eventually, SimpleAction, SimpleDecorators and SimpleCondition can use
+    blackboard and NodeParameters too.
+  * reduce potential memory allocations using string_view
+  * fix important issue with SubtreeNode
+  * Read at every tick the parameter if Blackboard is used
+  * Adding NodeParameters to ParallelNode
+  * travis update
+  * merge pull request #14 related to #10 (with some minor changes)
+  * Fix issue #8 and warning reported in #4
+    Fixed problem of visibility with TinyXML2
+  * Contributors: Davide Faconti, Uilian Ries
+
+ -- Michele Colledanchise <michele.colledanchise@gmail.com>  Mon, 19 Nov 2018 23:00:00 -0000
+
+ros-lunar-behaviortree-cpp (2.1.0-0stretch) stretch; urgency=high
+
+  * version 2.1. New directory structure
+  * Contributors: Davide Faconti
+
+ -- Michele Colledanchise <michele.colledanchise@gmail.com>  Thu, 15 Nov 2018 23:00:00 -0000
+
+
