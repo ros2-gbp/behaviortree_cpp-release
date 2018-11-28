@@ -1,0 +1,41 @@
+ros-kinetic-behaviortree-cpp (2.3.0-0xenial) xenial; urgency=high
+
+  * Fix: registerBuilder did not register the manifest. It was "broken" as public API method
+  * Use the Pimpl idiom to hide zmq from the header file
+  * move header of minitrace in the cpp file
+  * Fixed a crash occuring when you didn't initialized a Tree object (#20)
+  * Fix issue #16
+  * add ParallelNode to pre-registered entries in factory (issue #13)
+  * removed M_PI
+  * Update the documentation
+  * Contributors: Davide Faconti, Jimmy Delas
+
+ -- Michele Colledanchise <michele.colledanchise@gmail.com>  Tue, 27 Nov 2018 23:00:00 -0000
+
+ros-kinetic-behaviortree-cpp (2.2.0-0xenial) xenial; urgency=high
+
+  * fix typo
+  * method contains() added to BlackBoard
+  * back compatible API change to improve the wrapping of legacy code (issue #15)
+    Eventually, SimpleAction, SimpleDecorators and SimpleCondition can use
+    blackboard and NodeParameters too.
+  * reduce potential memory allocations using string_view
+  * fix important issue with SubtreeNode
+  * Read at every tick the parameter if Blackboard is used
+  * Adding NodeParameters to ParallelNode
+  * travis update
+  * merge pull request #14 related to #10 (with some minor changes)
+  * Fix issue #8 and warning reported in #4
+    Fixed problem of visibility with TinyXML2
+  * Contributors: Davide Faconti, Uilian Ries
+
+ -- Michele Colledanchise <michele.colledanchise@gmail.com>  Mon, 19 Nov 2018 23:00:00 -0000
+
+ros-kinetic-behaviortree-cpp (2.1.0-0xenial) xenial; urgency=high
+
+  * version 2.1. New directory structure
+  * Contributors: Davide Faconti
+
+ -- Michele Colledanchise <michele.colledanchise@gmail.com>  Thu, 15 Nov 2018 23:00:00 -0000
+
+
