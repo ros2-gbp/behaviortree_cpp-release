@@ -19,10 +19,13 @@ matrix:
         env: ROS_DISTRO="indigo"
       - ros_kinetic:
         env: ROS_DISTRO="kinetic"
-    fast_finish: true
+      - ros_melodic:
+        env: ROS_DISTRO="melodic"
+    fast_finish: false
 
 before_install:
-  - sudo apt-get update && sudo apt-get --reinstall install -qq build-essential libzmqpp-dev
+  - sudo apt-get update && sudo apt-get --reinstall install -qq build-essential 
+  - if [ "$ROS_DISTRO" = "none" ]; then sudo apt-get --reinstall install -qq libzmq3-dev; fi
   # GTest: see motivation here https://www.eriksmistad.no/getting-started-with-google-test-on-ubuntu/
   - sudo apt-get --reinstall install -qq libgtest-dev cmake
   - cd /usr/src/gtest
