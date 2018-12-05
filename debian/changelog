@@ -1,0 +1,69 @@
+ros-melodic-behaviortree-cpp (2.4.1-0stretch) stretch; urgency=high
+
+  * fix warnings and dependencies in ROS, mainly related to ZMQ
+  * Contributors: Davide Faconti
+
+ -- Michele Colledanchise <michele.colledanchise@gmail.com>  Tue, 04 Dec 2018 23:00:00 -0000
+
+ros-melodic-behaviortree-cpp (2.4.0-0stretch) stretch; urgency=high
+
+  * Merge pull request #27 from mjeronimo/bt-12-4-2018
+    Add support for ament/colcon build
+  * updated documentation
+  * Merge pull request #25 from BehaviorTree/include_xml
+    Add the ability to include an XML from another one
+  * <include> supports ROS package getPath (issue #17)
+  * Trying to fix writeXML (issue #24)
+  * New feature: include XMl from other XMLs (issue #17)
+  * more verbose error message
+  * adding unit tests for Repeat and Retry nodes #23
+  * Bug fix in Retry and Repeat Decorators (needs unit test)
+  * Throw if the parameter in blackboard can't be read
+  * Try to prevent error #22 in user code
+  * changed the protocol of the XML
+  * fixing issue #22
+  * Contributors: Davide Faconti, Michael Jeronimo
+
+ -- Michele Colledanchise <michele.colledanchise@gmail.com>  Tue, 04 Dec 2018 23:00:00 -0000
+
+ros-melodic-behaviortree-cpp (2.3.0-0stretch) stretch; urgency=high
+
+  * Fix: registerBuilder did not register the manifest. It was "broken" as public API method
+  * Use the Pimpl idiom to hide zmq from the header file
+  * move header of minitrace in the cpp file
+  * Fixed a crash occuring when you didn't initialized a Tree object (#20)
+  * Fix issue #16
+  * add ParallelNode to pre-registered entries in factory (issue #13)
+  * removed M_PI
+  * Update the documentation
+  * Contributors: Davide Faconti, Jimmy Delas
+
+ -- Michele Colledanchise <michele.colledanchise@gmail.com>  Tue, 27 Nov 2018 23:00:00 -0000
+
+ros-melodic-behaviortree-cpp (2.2.0-0stretch) stretch; urgency=high
+
+  * fix typo
+  * method contains() added to BlackBoard
+  * back compatible API change to improve the wrapping of legacy code (issue #15)
+    Eventually, SimpleAction, SimpleDecorators and SimpleCondition can use
+    blackboard and NodeParameters too.
+  * reduce potential memory allocations using string_view
+  * fix important issue with SubtreeNode
+  * Read at every tick the parameter if Blackboard is used
+  * Adding NodeParameters to ParallelNode
+  * travis update
+  * merge pull request #14 related to #10 (with some minor changes)
+  * Fix issue #8 and warning reported in #4
+    Fixed problem of visibility with TinyXML2
+  * Contributors: Davide Faconti, Uilian Ries
+
+ -- Michele Colledanchise <michele.colledanchise@gmail.com>  Mon, 19 Nov 2018 23:00:00 -0000
+
+ros-melodic-behaviortree-cpp (2.1.0-0stretch) stretch; urgency=high
+
+  * version 2.1. New directory structure
+  * Contributors: Davide Faconti
+
+ -- Michele Colledanchise <michele.colledanchise@gmail.com>  Thu, 15 Nov 2018 23:00:00 -0000
+
+
