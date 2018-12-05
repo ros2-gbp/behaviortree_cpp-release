@@ -1,3 +1,26 @@
+## behaviortree_cpp (crystal) - 2.4.2-0
+
+The packages in the `behaviortree_cpp` repository were released into the `crystal` distro by running `/usr/bin/bloom-release behaviortree_cpp --track crystal --rosdistro crystal --edit` on `Wed, 05 Dec 2018 15:08:22 -0000`
+
+The `behaviortree_cpp` package was released.
+
+Version of package(s) in repository `behaviortree_cpp`:
+
+- upstream repository: https://github.com/BehaviorTree/BehaviorTree.CPP.git
+- release repository: https://github.com/BehaviorTree/behaviortree_cpp-release.git
+- rosdistro version: `2.4.1-0`
+- old version: `2.4.1-0`
+- new version: `2.4.2-0`
+
+Versions of tools used:
+
+- bloom version: `0.6.9`
+- catkin_pkg version: `0.4.9`
+- rosdep version: `0.13.0`
+- rosdistro version: `0.7.0`
+- vcstools version: `0.1.40`
+
+
 ## behaviortree_cpp (melodic) - 2.4.1-0
 
 The packages in the `behaviortree_cpp` repository were released into the `melodic` distro by running `/usr/bin/bloom-release behaviortree_cpp --track melodic --rosdistro melodic` on `Wed, 05 Dec 2018 13:59:37 -0000`
