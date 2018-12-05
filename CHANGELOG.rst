@@ -2,6 +2,11 @@
 Changelog for package behaviortree_cpp
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+2.4.1 (2018-12-05)
+------------------
+* fix warnings and dependencies in ROS, mainly related to ZMQ
+* Contributors: Davide Faconti
+
 2.4.0 (2018-12-05)
 ------------------
 * Merge pull request #27 from mjeronimo/bt-12-4-2018
