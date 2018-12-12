@@ -44,6 +44,8 @@ endif()
 find_package(ament_cmake QUIET)
 
 if ( ament_cmake_FOUND )
+  find_package(ament_cmake_gtest REQUIRED)
+
   # Not adding -DUSING_ROS since xml_parsing.cpp hasn't been ported to ROS2
 
   message(STATUS "------------------------------------------")
@@ -164,6 +166,7 @@ set(BT_TESTS
   gtest/gtest_fallback.cpp
   gtest/gtest_factory.cpp
   gtest/gtest_decorator.cpp
+  gtest/gtest_blackboard.cpp
 )
 
 if(ament_cmake_FOUND AND BUILD_TESTING)
