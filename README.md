@@ -2,6 +2,8 @@
 ![Version](https://img.shields.io/badge/version-v2.4-green.svg)
 [![Build Status](https://travis-ci.org/BehaviorTree/BehaviorTree.CPP.svg?branch=master)](https://travis-ci.org/BehaviorTree/BehaviorTree.CPP)
 
+Question? [![Join the chat at https://gitter.im/BehaviorTree-ROS/Lobby](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/BehaviorTree-ROS/Lobby?utm_source=badge&utm_medium=badge&utm_content=badge)
+
 # About BehaviorTree.CPP
 
 This  __C++__ library provides a framework to create BehaviorTrees.
@@ -31,6 +33,13 @@ If you are looking for a more fancy graphical user interface, check
 [Groot](https://github.com/BehaviorTree/Groot) out.
 
 ![Groot screenshot](groot-screenshot.png)
+
+## Watch Groot and BehaviorTree.CPP in action
+
+Click on the following image to see a short video of how the C++ library and
+the graphic user interface are used to design and monitor a Behavior Tree.
+
+[![MOOD2Be](video_MOOD2Be.png)](https://vimeo.com/304651183)
 
 # How to compile
 

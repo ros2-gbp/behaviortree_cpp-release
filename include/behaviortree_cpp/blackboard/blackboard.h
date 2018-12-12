@@ -8,10 +8,7 @@
 #include <unordered_map>
 
 #include "behaviortree_cpp/blackboard/safe_any.hpp"
-#include "behaviortree_cpp/optional.hpp"
 
-template <typename T>
-T convertFromString(const std::string& str);
 
 namespace BT
 {
@@ -59,7 +56,7 @@ class Blackboard
     /** Return true if the entry with the given key was found.
      *  Note that this method may throw an exception if the cast to T failed.
      *
-     * return true is succesful
+     * return true if succesful
      */
     template <typename T>
     bool get(const std::string& key, T& value) const
@@ -74,17 +71,19 @@ class Blackboard
             return false;
         }
 
-        if (!std::is_same<std::string, T>::value &&
-            (val->type() == typeid(SafeAny::SimpleString) || val->type() == typeid(std::string)))
-        {
-            value = convertFromString<T>(val->cast<std::string>());
-        }
-        else
-        {
-            value = val->cast<T>();
-        }
+        value = val->cast<T>();
         return true;
     }
+
+    const SafeAny::Any* getAny(const std::string& key) const
+    {
+        if (!impl_)
+        {
+            return nullptr;
+        }
+        return impl_->get(key);
+    }
+
 
     template <typename T>
     T get(const std::string& key) const
