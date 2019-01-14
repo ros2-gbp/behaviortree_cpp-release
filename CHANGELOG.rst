@@ -2,6 +2,71 @@
 Changelog for package behaviortree_cpp
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+2.5.1 (2019-01-14)
+------------------
+* fix installation directory
+* #39 Fix Conan version (#42)
+  Signed-off-by: Uilian Ries <uilianries@gmail.com>
+* Update .travis.yml
+* Conan package distribution (#39)
+* Non-functional refactoring of xml_parsing to clean up the code
+* cosmetic changes in the code of BehaviorTreeFactory
+* XML schema. Related to enchancement #40
+* call setRegistrationName() for built-in Nodes
+  The methos is called by BehaviorTreefactory, therefore it
+  registrationName is empty if trees are created programmatically.
+* Reset reference count when destroying logger (issue #38)
+* Contributors: Davide Facont, Davide Faconti, Uilian Ries
+
+2.5.0 (2018-12-12)
+------------------
+* Introducing SyncActionNode that is more self explaining and less ambiguous
+* fix potential problem related to ControlNode::haltChildren()
+* Adding example/test of navigation and recovery behavior. Related to issue #36
+* Contributors: Davide Faconti
+
+2.4.4 (2018-12-12)
+------------------
+* adding virtual TreeNode::onInit() [issue #33]
+* fix issue #34 : if you don't implement convertFromString, it will compile but it may throw
+* Pretty demangled names and obsolate comments removed
+* bug fixes
+* more comments
+* [enhancement #32]: add CoroActionNode and rename ActionNode as "AsynActionNode"
+  The name ActionNode was confusing and it has been deprecated.
+* Update README.md
+* removed old file
+* Fix issue #31 : convertFromString mandatory for TreeNode::getParam, not Blackboard::get
+* Cherry piking changes from PR #19 which solve issue #2 CONAN support
+* Contributors: Davide Faconti
+
+2.4.3 (2018-12-07)
+------------------
+* Merge branch 'master' into ros2
+* removed old file
+* Fix issue #31 : convertFromString mandatory for TreeNode::getParam, not Blackboard::get
+* 2.4.3
+* version bump
+* Merge pull request #30 from nuclearsandwich/patch-1
+  Fix typo in package name.
+* Remove extra find_package(ament_cmake_gtest).
+  This package should only be needed if BUILD_TESTING is on and is
+  find_package'd below if ament_cmake is found and BUILD_TESTING is on.
+* Fix typo in package name.
+* added video to readme
+* Cherry piking changes from PR #19 which solve issue #2 CONAN support
+* Merge pull request #29 from nuclearsandwich/ament-gtest-dep
+  Add test dependency on ament_cmake_gtest.
+* Add test dependency on ament_cmake_gtest.
+* fix travis removing CI
+* Contributors: Davide Faconti, Steven! Ragnarök
+
+2.4.2 (2018-12-05)
+------------------
+* support ament
+* change to ament
+* Contributors: Davide Faconti
+
 2.4.1 (2018-12-05)
 ------------------
 * fix warnings and dependencies in ROS, mainly related to ZMQ
