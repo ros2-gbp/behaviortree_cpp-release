@@ -1,3 +1,26 @@
+## behaviortree_cpp (kinetic) - 2.5.1-0
+
+The packages in the `behaviortree_cpp` repository were released into the `kinetic` distro by running `/usr/bin/bloom-release behaviortree_cpp --rosdistro kinetic` on `Mon, 14 Jan 2019 20:42:18 -0000`
+
+The `behaviortree_cpp` package was released.
+
+Version of package(s) in repository `behaviortree_cpp`:
+
+- upstream repository: https://github.com/BehaviorTree/BehaviorTree.CPP.git
+- release repository: https://github.com/BehaviorTree/behaviortree_cpp-release.git
+- rosdistro version: `2.4.4-0`
+- old version: `2.4.4-0`
+- new version: `2.5.1-0`
+
+Versions of tools used:
+
+- bloom version: `0.7.1`
+- catkin_pkg version: `0.4.10`
+- rosdep version: `0.13.0`
+- rosdistro version: `0.7.0`
+- vcstools version: `0.1.40`
+
+
 ## behaviortree_cpp (indigo) - 2.4.4-0
 
 The packages in the `behaviortree_cpp` repository were released into the `indigo` distro by running `/usr/bin/bloom-release behaviortree_cpp --track indigo --rosdistro indigo` on `Wed, 12 Dec 2018 13:08:25 -0000`
