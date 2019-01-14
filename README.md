@@ -1,3 +1,26 @@
+## behaviortree_cpp (lunar) - 2.5.1-0
+
+The packages in the `behaviortree_cpp` repository were released into the `lunar` distro by running `/usr/bin/bloom-release behaviortree_cpp --rosdistro lunar` on `Mon, 14 Jan 2019 21:00:34 -0000`
+
+The `behaviortree_cpp` package was released.
+
+Version of package(s) in repository `behaviortree_cpp`:
+
+- upstream repository: https://github.com/BehaviorTree/BehaviorTree.CPP.git
+- release repository: https://github.com/BehaviorTree/behaviortree_cpp-release.git
+- rosdistro version: `2.4.1-0`
+- old version: `2.4.1-0`
+- new version: `2.5.1-0`
+
+Versions of tools used:
+
+- bloom version: `0.7.1`
+- catkin_pkg version: `0.4.10`
+- rosdep version: `0.13.0`
+- rosdistro version: `0.7.0`
+- vcstools version: `0.1.40`
+
+
 ## behaviortree_cpp (indigo) - 2.5.1-0
 
 The packages in the `behaviortree_cpp` repository were released into the `indigo` distro by running `/usr/bin/bloom-release behaviortree_cpp --rosdistro indigo` on `Mon, 14 Jan 2019 20:50:43 -0000`
