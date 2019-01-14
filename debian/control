@@ -1,0 +1,12 @@
+Source: ros-lunar-behaviortree-cpp
+Section: misc
+Priority: extra
+Maintainer: Michele Colledanchise <michele.colledanchise@gmail.com>
+Build-Depends: debhelper (>= 9.0.0), libzmq3-dev, ros-lunar-catkin, ros-lunar-roslib
+Homepage: 
+Standards-Version: 3.9.2
+
+Package: ros-lunar-behaviortree-cpp
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, libzmq3-dev, ros-lunar-roslib
+Description: This package provides a behavior trees core.
