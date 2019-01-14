@@ -167,6 +167,7 @@ set(BT_TESTS
   gtest/gtest_factory.cpp
   gtest/gtest_decorator.cpp
   gtest/gtest_blackboard.cpp
+  gtest/navigation_test.cpp
 )
 
 if(ament_cmake_FOUND AND BUILD_TESTING)
@@ -214,7 +215,7 @@ if(ament_cmake_FOUND)
     ament_package()
 elseif(catkin_FOUND)
     set( BEHAVIOR_TREE_LIB_DESTINATION   ${CATKIN_PACKAGE_LIB_DESTINATION} )
-    set( BEHAVIOR_TREE_INC_DESTINATION   ${CATKIN_PACKAGE_INCLUDE_DESTINATION} )
+    set( BEHAVIOR_TREE_INC_DESTINATION   ${CATKIN_GLOBAL_INCLUDE_DESTINATION} )
     set( BEHAVIOR_TREE_BIN_DESTINATION   ${CATKIN_PACKAGE_BIN_DESTINATION} )
 else()
     set( BEHAVIOR_TREE_LIB_DESTINATION   lib )
