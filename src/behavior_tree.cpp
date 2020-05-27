@@ -1,4 +1,4 @@
-/*  Copyright (C) 2018 Davide Faconti -  All Rights Reserved
+/*  Copyright (C) 2018-2020 Davide Faconti, Eurecat -  All Rights Reserved
 *
 *   Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"),
 *   to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense,
@@ -10,7 +10,7 @@
 *   WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-#include "behaviortree_cpp/behavior_tree.h"
+#include "behaviortree_cpp_v3/behavior_tree.h"
 #include <cstring>
 
 namespace BT
@@ -20,7 +20,7 @@ void applyRecursiveVisitor(const TreeNode* node,
 {
     if (!node)
     {
-        throw std::runtime_error("One of the children of a DecoratorNode or ControlNode is nulltr");
+        throw LogicError("One of the children of a DecoratorNode or ControlNode is nullptr");
     }
 
     visitor(node);
@@ -42,7 +42,7 @@ void applyRecursiveVisitor(TreeNode* node, const std::function<void(TreeNode*)>&
 {
     if (!node)
     {
-        throw std::runtime_error("One of the children of a DecoratorNode or ControlNode is nulltr");
+        throw LogicError("One of the children of a DecoratorNode or ControlNode is nullptr");
     }
 
     visitor(node);
@@ -62,7 +62,7 @@ void applyRecursiveVisitor(TreeNode* node, const std::function<void(TreeNode*)>&
 
 void printTreeRecursively(const TreeNode* root_node)
 {
-    std::function<void(int, const BT::TreeNode*)> recursivePrint;
+    std::function<void(unsigned, const BT::TreeNode*)> recursivePrint;
 
     recursivePrint = [&recursivePrint](unsigned indent, const BT::TreeNode* node) {
         for (unsigned i = 0; i < indent; i++)
@@ -107,20 +107,4 @@ void buildSerializedStatusSnapshot(TreeNode* root_node, SerializedTreeStatus& se
     applyRecursiveVisitor(root_node, visitor);
 }
 
-void assignBlackboardToEntireTree(TreeNode* root_node, const Blackboard::Ptr& bb)
-{
-    auto visitor = [bb](TreeNode* node) { node->setBlackboard(bb); };
-    applyRecursiveVisitor(root_node, visitor);
-}
-
-void haltAllActions(TreeNode* root_node)
-{
-    auto visitor = [](TreeNode* node) {
-        if (auto action = dynamic_cast<AsyncActionNode*>(node))
-        {
-            action->stopAndJoinThread();
-        }
-    };
-    applyRecursiveVisitor(root_node, visitor);
-}
-}
+} // end namespace

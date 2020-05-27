@@ -1,4 +1,4 @@
-/*  Copyright (C) 2018 Davide Faconti -  All Rights Reserved
+/*  Copyright (C) 2018-2020 Davide Faconti, Eurecat -  All Rights Reserved
 *
 *   Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"),
 *   to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense,
@@ -10,37 +10,56 @@
 *   WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-#include "behaviortree_cpp/bt_factory.h"
-#include "behaviortree_cpp/shared_library.h"
+#include "behaviortree_cpp_v3/bt_factory.h"
+#include "behaviortree_cpp_v3/utils/shared_library.h"
+#include "behaviortree_cpp_v3/xml_parsing.h"
+
+#ifdef USING_ROS
+#include "filesystem/path.h"
+#include <ros/package.h>
+#endif
 
 namespace BT
 {
 BehaviorTreeFactory::BehaviorTreeFactory()
 {
     registerNodeType<FallbackNode>("Fallback");
-    registerNodeType<FallbackStarNode>("FallbackStar");
     registerNodeType<SequenceNode>("Sequence");
     registerNodeType<SequenceStarNode>("SequenceStar");
-    registerNodeType<ParallelNode>("ParallelNode");
+    registerNodeType<ParallelNode>("Parallel");
+    registerNodeType<ReactiveSequence>("ReactiveSequence");
+    registerNodeType<ReactiveFallback>("ReactiveFallback");
+    registerNodeType<IfThenElseNode>("IfThenElse");
+    registerNodeType<WhileDoElseNode>("WhileDoElse");
 
     registerNodeType<InverterNode>("Inverter");
     registerNodeType<RetryNode>("RetryUntilSuccesful");
     registerNodeType<RepeatNode>("Repeat");
     registerNodeType<TimeoutNode>("Timeout");
 
-    registerNodeType<ForceSuccessDecorator>("ForceSuccess");
-    registerNodeType<ForceFailureDecorator>("ForceFailure");
+    registerNodeType<ForceSuccessNode>("ForceSuccess");
+    registerNodeType<ForceFailureNode>("ForceFailure");
 
-    registerNodeType<AlwaysSuccess>("AlwaysSuccess");
-    registerNodeType<AlwaysFailure>("AlwaysFailure");
+    registerNodeType<AlwaysSuccessNode>("AlwaysSuccess");
+    registerNodeType<AlwaysFailureNode>("AlwaysFailure");
     registerNodeType<SetBlackboard>("SetBlackboard");
 
-    registerNodeType<DecoratorSubtreeNode>("SubTree");
+    registerNodeType<SubtreeNode>("SubTree");
+    registerNodeType<SubtreePlusNode>("SubTreePlus");
 
     registerNodeType<BlackboardPreconditionNode<int>>("BlackboardCheckInt");
     registerNodeType<BlackboardPreconditionNode<double>>("BlackboardCheckDouble");
     registerNodeType<BlackboardPreconditionNode<std::string>>("BlackboardCheckString");
 
+    registerNodeType<SwitchNode<2>>("Switch2");
+    registerNodeType<SwitchNode<3>>("Switch3");
+    registerNodeType<SwitchNode<4>>("Switch4");
+    registerNodeType<SwitchNode<5>>("Switch5");
+    registerNodeType<SwitchNode<6>>("Switch6");
+
+#ifdef NCURSES_FOUND
+    registerNodeType<ManualSelectorNode>("ManualSelector");
+#endif
     for( const auto& it: builders_)
     {
         builtin_IDs_.insert( it.first );
@@ -49,62 +68,69 @@ BehaviorTreeFactory::BehaviorTreeFactory()
 
 bool BehaviorTreeFactory::unregisterBuilder(const std::string& ID)
 {
+    if( builtinNodes().count(ID) )
+    {
+        throw LogicError("You can not remove the builtin registration ID [", ID, "]");
+    }
     auto it = builders_.find(ID);
     if (it == builders_.end())
     {
         return false;
     }
     builders_.erase(ID);
+    manifests_.erase(ID);
     return true;
 }
 
-void BehaviorTreeFactory::registerBuilder(const TreeNodeManifest& manifest, NodeBuilder builder)
+void BehaviorTreeFactory::registerBuilder(const TreeNodeManifest& manifest, const NodeBuilder& builder)
 {
     auto it = builders_.find( manifest.registration_ID);
     if (it != builders_.end())
     {
-        throw BehaviorTreeException("ID '" + manifest.registration_ID + "' already registered");
+        throw BehaviorTreeException("ID [", manifest.registration_ID, "] already registered");
     }
 
-    builders_.insert(std::make_pair(manifest.registration_ID, builder));
-    manifests_.push_back(manifest);
-    sortTreeNodeManifests();
+    builders_.insert(  {manifest.registration_ID, builder} );
+    manifests_.insert( {manifest.registration_ID, manifest} );
 }
 
-void BehaviorTreeFactory::registerSimpleCondition(
-    const std::string& ID, const SimpleConditionNode::TickFunctor& tick_functor)
+void BehaviorTreeFactory::registerSimpleCondition(const std::string& ID,
+                                                  const SimpleConditionNode::TickFunctor& tick_functor,
+                                                  PortsList ports)
 {
-    NodeBuilder builder = [tick_functor, ID](const std::string& name, const NodeParameters& params) {
-        return std::unique_ptr<TreeNode>(new SimpleConditionNode(name, tick_functor, params));
+    NodeBuilder builder = [tick_functor, ID](const std::string& name, const NodeConfiguration& config) {
+        return std::make_unique<SimpleConditionNode>(name, tick_functor, config);
     };
 
-    TreeNodeManifest manifest = { NodeType::CONDITION, ID, NodeParameters() };
+    TreeNodeManifest manifest = { NodeType::CONDITION, ID, std::move(ports) };
     registerBuilder(manifest, builder);
 }
 
 void BehaviorTreeFactory::registerSimpleAction(const std::string& ID,
-                                               const SimpleActionNode::TickFunctor& tick_functor)
+                                               const SimpleActionNode::TickFunctor& tick_functor,
+                                               PortsList ports)
 {
-    NodeBuilder builder = [tick_functor, ID](const std::string& name, const NodeParameters& params) {
-        return std::unique_ptr<TreeNode>(new SimpleActionNode(name, tick_functor, params));
+    NodeBuilder builder = [tick_functor, ID](const std::string& name, const NodeConfiguration& config) {
+        return std::make_unique<SimpleActionNode>(name, tick_functor, config);
     };
 
-    TreeNodeManifest manifest = { NodeType::ACTION, ID, NodeParameters() };
+    TreeNodeManifest manifest = { NodeType::ACTION, ID, std::move(ports) };
     registerBuilder(manifest, builder);
 }
 
-void BehaviorTreeFactory::registerSimpleDecorator(
-    const std::string& ID, const SimpleDecoratorNode::TickFunctor& tick_functor)
+void BehaviorTreeFactory::registerSimpleDecorator(const std::string& ID,
+                                                  const SimpleDecoratorNode::TickFunctor& tick_functor,
+                                                  PortsList ports)
 {
-    NodeBuilder builder = [tick_functor, ID](const std::string& name, const NodeParameters& params) {
-        return std::unique_ptr<TreeNode>(new SimpleDecoratorNode(name, tick_functor, params));
+    NodeBuilder builder = [tick_functor, ID](const std::string& name, const NodeConfiguration& config) {
+        return std::make_unique<SimpleDecoratorNode>(name, tick_functor, config);
     };
 
-    TreeNodeManifest manifest = { NodeType::DECORATOR, ID, NodeParameters() };
+    TreeNodeManifest manifest = { NodeType::DECORATOR, ID, std::move(ports) };
     registerBuilder(manifest, builder);
 }
 
-void BehaviorTreeFactory::registerFromPlugin(const std::string file_path)
+void BehaviorTreeFactory::registerFromPlugin(const std::string& file_path)
 {
     BT::SharedLibrary loader;
     loader.load(file_path);
@@ -122,35 +148,93 @@ void BehaviorTreeFactory::registerFromPlugin(const std::string file_path)
     }
 }
 
+#ifdef USING_ROS
+
+    #ifdef _WIN32
+const char os_pathsep(';');   // NOLINT
+#else
+const char os_pathsep(':');   // NOLINT
+#endif
+
+// This function is a copy from the one in class_loader_imp.hpp in ROS pluginlib
+// package, licensed under BSD.
+// https://github.com/ros/pluginlib
+std::vector<std::string> getCatkinLibraryPaths()
+{
+    std::vector<std::string> lib_paths;
+    const char* env = std::getenv("CMAKE_PREFIX_PATH");
+    if (env)
+    {
+        const std::string env_catkin_prefix_paths(env);
+        std::vector<BT::StringView> catkin_prefix_paths =
+            splitString(env_catkin_prefix_paths, os_pathsep);
+        for (BT::StringView catkin_prefix_path : catkin_prefix_paths)
+        {
+            filesystem::path path(static_cast<std::string>(catkin_prefix_path));
+            filesystem::path lib("lib");
+            lib_paths.push_back((path / lib).str());
+        }
+    }
+    return lib_paths;
+}
+
+void BehaviorTreeFactory::registerFromROSPlugins()
+{
+    std::vector<std::string> plugins;
+    ros::package::getPlugins("behaviortree_cpp", "bt_lib_plugin", plugins, true);
+    std::vector<std::string> catkin_lib_paths = getCatkinLibraryPaths();
+
+    for (const auto& plugin : plugins)
+    {
+        auto filename = filesystem::path(plugin + BT::SharedLibrary::suffix());
+        for (const auto& lib_path : catkin_lib_paths)
+        {
+            const auto full_path = filesystem::path(lib_path) / filename;
+            if (full_path.exists())
+            {
+                std::cout << "Registering ROS plugins from " << full_path.str() << std::endl;
+                registerFromPlugin(full_path.str());
+                break;
+            }
+        }
+    }
+}
+#else
+
+    void BehaviorTreeFactory::registerFromROSPlugins()
+    {
+        throw RuntimeError("Using attribute [ros_pkg] in <include>, but this library was compiled "
+                           "without ROS support. Recompile the BehaviorTree.CPP using catkin");
+    }
+#endif
+
 std::unique_ptr<TreeNode> BehaviorTreeFactory::instantiateTreeNode(
-        const std::string& ID, const std::string& name,
-        const NodeParameters& params,
-        const Blackboard::Ptr& blackboard) const
+        const std::string& name,
+        const std::string& ID,
+        const NodeConfiguration& config) const
 {
     auto it = builders_.find(ID);
     if (it == builders_.end())
     {
         std::cerr << ID << " not included in this list:" << std::endl;
-        for (const auto& it: builders_)
+        for (const auto& builder_it: builders_)
         {
-            std::cerr << it.first << std::endl;
+            std::cerr << builder_it.first << std::endl;
         }
-        throw std::invalid_argument("ID '" + ID + "' not registered");
+        throw RuntimeError("BehaviorTreeFactory: ID [", ID, "] not registered");
     }
-    std::unique_ptr<TreeNode> node = it->second(name, params);
-    node->setRegistrationName(ID);
-    node->setBlackboard(blackboard);
-    node->initializeOnce();
 
+    std::unique_ptr<TreeNode> node = it->second(name, config);
+    node->setRegistrationID( ID );
     return node;
 }
 
-const std::map<std::string, NodeBuilder>& BehaviorTreeFactory::builders() const
+const std::unordered_map<std::string, NodeBuilder> &BehaviorTreeFactory::builders() const
 {
     return builders_;
 }
 
-const std::vector<TreeNodeManifest>& BehaviorTreeFactory::manifests() const
+const std::unordered_map<std::string,TreeNodeManifest>& BehaviorTreeFactory::manifests() const
 {
     return manifests_;
 }
@@ -160,17 +244,39 @@ const std::set<std::string> &BehaviorTreeFactory::builtinNodes() const
     return builtin_IDs_;
 }
 
-void BehaviorTreeFactory::sortTreeNodeManifests()
+Tree BehaviorTreeFactory::createTreeFromText(const std::string &text,
+                                             Blackboard::Ptr blackboard)
 {
-    std::sort(manifests_.begin(), manifests_.end(),
-              [](const TreeNodeManifest& a, const TreeNodeManifest& b) {
-                  int comp = std::strcmp(toStr(a.type), toStr(b.type));
-                  if (comp == 0)
-                  {
-                      return a.registration_ID < b.registration_ID;
-                  }
-                  return comp < 0;
-              });
+    XMLParser parser(*this);
+    parser.loadFromText(text);
+    auto tree = parser.instantiateTree(blackboard);
+    tree.manifests = this->manifests();
+    return tree;
 }
+
+Tree BehaviorTreeFactory::createTreeFromFile(const std::string &file_path,
+                                             Blackboard::Ptr blackboard)
+{
+    XMLParser parser(*this);
+    parser.loadFromFile(file_path);
+    auto tree = parser.instantiateTree(blackboard);
+    tree.manifests = this->manifests();
+    return tree;
+}
+
+Tree::~Tree()
+{
+    haltTree();
+}
+
+Blackboard::Ptr Tree::rootBlackboard()
+{
+    if( blackboard_stack.size() > 0)
+    {
+        return blackboard_stack.front();
+    }
+    return {};
+}
+
 
 }   // end namespace

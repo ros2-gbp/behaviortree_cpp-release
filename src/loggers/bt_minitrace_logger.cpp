@@ -1,18 +1,18 @@
 
-#include "behaviortree_cpp/loggers/bt_minitrace_logger.h"
+#include "behaviortree_cpp_v3/loggers/bt_minitrace_logger.h"
 #include "minitrace/minitrace.h"
 
 namespace BT
 {
 std::atomic<bool> MinitraceLogger::ref_count(false);
 
-MinitraceLogger::MinitraceLogger(TreeNode* root_node, const char* filename_json)
-  : StatusChangeLogger(root_node)
+MinitraceLogger::MinitraceLogger(const Tree &tree, const char* filename_json)
+  : StatusChangeLogger( tree.rootNode() )
 {
     bool expected = false;
     if (!ref_count.compare_exchange_strong(expected, true))
     {
-        throw std::logic_error("Only one instance of StdCoutLogger shall be created");
+        throw LogicError("Only one instance of StdCoutLogger shall be created");
     }
 
     minitrace::mtr_register_sigint_handler();
@@ -24,7 +24,26 @@ MinitraceLogger::~MinitraceLogger()
 {
     minitrace::mtr_flush();
     minitrace::mtr_shutdown();
-	ref_count = false;
+    ref_count = false;
+}
+
+const char* toConstStr(NodeType type)
+{
+  switch (type)
+  {
+    case NodeType::ACTION:
+      return "Action";
+    case NodeType::CONDITION:
+      return "Condition";
+    case NodeType::DECORATOR:
+      return "Decorator";
+    case NodeType::CONTROL:
+      return "Control";
+    case NodeType::SUBTREE:
+      return "SubTree";
+    default:
+      return "Undefined";
+  }
 }
 
 void MinitraceLogger::callback(Duration /*timestamp*/,
@@ -35,7 +54,7 @@ void MinitraceLogger::callback(Duration /*timestamp*/,
 
     const bool statusCompleted = (status == NodeStatus::SUCCESS || status == NodeStatus::FAILURE);
 
-    const char* category = toStr(node.type());
+    const char* category = toConstStr(node.type());
     const char* name = node.name().c_str();
 
     if (prev_status == NodeStatus::IDLE && statusCompleted)

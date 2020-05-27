@@ -1,5 +1,5 @@
 /* Copyright (C) 2015-2018 Michele Colledanchise -  All Rights Reserved
- * Copyright (C) 2018 Davide Faconti -  All Rights Reserved
+ * Copyright (C) 2018-2020 Davide Faconti, Eurecat -  All Rights Reserved
 *
 *   Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"),
 *   to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense,
@@ -11,34 +11,22 @@
 *   WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-#include "behaviortree_cpp/action_node.h"
-#include "coroutine/coroutine.h"
+#include "behaviortree_cpp_v3/action_node.h"
 
-namespace BT
-{
-ActionNodeBase::ActionNodeBase(const std::string& name, const NodeParameters& parameters)
-  : LeafNode::LeafNode(name, parameters)
+using namespace BT;
+
+ActionNodeBase::ActionNodeBase(const std::string& name, const NodeConfiguration& config)
+  : LeafNode::LeafNode(name, config)
 {
 }
 
-NodeStatus ActionNodeBase::executeTick()
-{
-    initializeOnce();
-    NodeStatus prev_status = status();
-
-    if (prev_status == NodeStatus::IDLE || prev_status == NodeStatus::RUNNING)
-    {
-        setStatus(tick());
-    }
-    return status();
-}
 
 //-------------------------------------------------------
 
 SimpleActionNode::SimpleActionNode(const std::string& name,
                                    SimpleActionNode::TickFunctor tick_functor,
-                                   const NodeParameters& params)
-  : ActionNodeBase(name, params), tick_functor_(std::move(tick_functor))
+                                   const NodeConfiguration& config)
+  : SyncActionNode(name, config), tick_functor_(std::move(tick_functor))
 {
 }
 
@@ -62,131 +50,158 @@ NodeStatus SimpleActionNode::tick()
 
 //-------------------------------------------------------
 
-AsyncActionNode::AsyncActionNode(const std::string& name, const NodeParameters& parameters)
-  : ActionNodeBase(name, parameters), loop_(true)
+SyncActionNode::SyncActionNode(const std::string &name, const NodeConfiguration& config):
+  ActionNodeBase(name, config)
+{}
+
+NodeStatus SyncActionNode::executeTick()
 {
-    thread_ = std::thread(&AsyncActionNode::waitForTick, this);
+  auto stat = ActionNodeBase::executeTick();
+  if( stat == NodeStatus::RUNNING)
+  {
+    throw LogicError("SyncActionNode MUST never return RUNNING");
+  }
+  return stat;
 }
 
-AsyncActionNode::~AsyncActionNode()
-{
-    if (thread_.joinable())
-    {
-        stopAndJoinThread();
-    }
-}
-
-void AsyncActionNode::waitForTick()
-{
-    while (loop_.load())
-    {
-        tick_engine_.wait();
-
-        // check loop_ again because the tick_engine_ could be
-        // notified from the method stopAndJoinThread
-        if (loop_ && status() == NodeStatus::IDLE)
-        {
-            setStatus(NodeStatus::RUNNING);
-            setStatus(tick());
-        }
-    }
-}
-
-NodeStatus AsyncActionNode::executeTick()
-{
-    initializeOnce();
-    //send signal to other thread.
-    // The other thread is in charge for changing the status
-    if (status() == NodeStatus::IDLE)
-    {
-        tick_engine_.notify();
-    }
-
-    // block as long as the state is NodeStatus::IDLE
-    const NodeStatus stat = waitValidStatus();
-    return stat;
-}
-
-void AsyncActionNode::stopAndJoinThread()
-{
-    loop_.store(false);
-    tick_engine_.notify();
-    if (thread_.joinable())
-    {
-        thread_.join();
-    }
-}
 
 //-------------------------------------
+#ifndef BT_NO_COROUTINES
+
+#ifdef BT_BOOST_COROUTINE2
+#include <boost/coroutine2/all.hpp>
+using namespace boost::coroutines2;
+#endif
+
+#ifdef BT_BOOST_COROUTINE
+#include <boost/coroutine/all.hpp>
+using namespace boost::coroutines;
+#endif
+
 struct CoroActionNode::Pimpl
 {
-    coroutine::routine_t coro;
-    Pimpl(): coro(0) {}
+    std::unique_ptr<coroutine<void>::pull_type> coro;
+    std::function<void(coroutine<void>::push_type & yield)> func;
+    coroutine<void>::push_type * yield_ptr;
 };
 
-
 CoroActionNode::CoroActionNode(const std::string &name,
-                               const NodeParameters &parameters):
-  ActionNodeBase (name, parameters),
-  _p(new  Pimpl)
+                               const NodeConfiguration& config):
+ ActionNodeBase (name, config), _p( new Pimpl)
 {
+    _p->func = [this](coroutine<void>::push_type & yield) {
+        _p->yield_ptr = &yield;
+        setStatus(tick());
+    };
 }
 
 CoroActionNode::~CoroActionNode()
 {
-    halt();
 }
 
 void CoroActionNode::setStatusRunningAndYield()
 {
     setStatus( NodeStatus::RUNNING );
-    coroutine::yield();
+    (*_p->yield_ptr)();
 }
 
 NodeStatus CoroActionNode::executeTick()
 {
-    initializeOnce();
-    if (status() == NodeStatus::IDLE)
+    if( !(_p->coro) || !(*_p->coro) )
     {
-        _p->coro = coroutine::create( [this]() { setStatus(tick()); } );
+        _p->coro.reset( new coroutine<void>::pull_type(_p->func) );
+        return status();
     }
 
-    if( _p->coro != 0)
+    if( status() == NodeStatus::RUNNING && (bool)_p->coro )
     {
-        auto res = coroutine::resume(_p->coro);
-
-        if( res == coroutine::ResumeResult::FINISHED)
-        {
-            coroutine::destroy(_p->coro);
-            _p->coro = 0;
-        }
+        (*_p->coro)();
     }
+
     return status();
 }
 
 void CoroActionNode::halt()
 {
-    if( _p->coro != 0 )
-    {
-        coroutine::destroy(_p->coro);
-        _p->coro = 0;
-    }
+    _p->coro.reset();
 }
+#endif
 
-SyncActionNode::SyncActionNode(const std::string &name, const NodeParameters &parameters):
-    ActionNodeBase(name, parameters)
-{}
 
-NodeStatus SyncActionNode::executeTick()
+
+NodeStatus StatefulActionNode::tick()
 {
-    auto stat = ActionNodeBase::executeTick();
-    if( stat == NodeStatus::RUNNING)
+  const NodeStatus initial_status = status();
+
+  if( initial_status == NodeStatus::IDLE )
+  {
+    NodeStatus new_status = onStart();
+    if( new_status == NodeStatus::IDLE)
     {
-        throw std::logic_error("SyncActionNode MUSt never return RUNNING");
+      throw std::logic_error("AsyncActionNode2::onStart() must not return IDLE");
     }
-    return stat;
+    return new_status;
+  }
+  //------------------------------------------
+  if( initial_status == NodeStatus::RUNNING )
+  {
+    NodeStatus new_status = onRunning();
+    if( new_status == NodeStatus::IDLE)
+    {
+      throw std::logic_error("AsyncActionNode2::onRunning() must not return IDLE");
+    }
+    return new_status;
+  }
+  //------------------------------------------
+  return initial_status;
 }
 
+void StatefulActionNode::halt()
+{
+  if( status() == NodeStatus::RUNNING)
+  {
+    onHalted();
+  }
+  setStatus(NodeStatus::IDLE);
+}
 
+NodeStatus BT::AsyncActionNode::executeTick()
+{
+    //send signal to other thread.
+    // The other thread is in charge for changing the status
+    if (status() == NodeStatus::IDLE)
+    {
+        setStatus( NodeStatus::RUNNING );
+        halt_requested_ = false;
+        thread_handle_ = std::async(std::launch::async, [this]() {
 
+            try {
+                setStatus(tick());
+            }
+            catch (std::exception&)
+            {
+                std::cerr << "\nUncaught exception from the method tick(): ["
+                          << registrationName() << "/" << name() << "]\n" << std::endl;
+                exptr_ = std::current_exception();
+                thread_handle_.wait();
+            }
+            return status();
+        });
+    }
+
+    if( exptr_ )
+    {
+        std::rethrow_exception(exptr_);
+    }
+    return status();
+}
+
+void AsyncActionNode::halt()
+{
+    halt_requested_.store(true);
+
+    if( thread_handle_.valid() ){
+        thread_handle_.wait();
+    }
+    thread_handle_ = {};
 }

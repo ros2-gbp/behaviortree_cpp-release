@@ -1,5 +1,5 @@
-#include "behaviortree_cpp/behavior_tree.h"
-#include "behaviortree_cpp/bt_factory.h"
+#include "behaviortree_cpp_v3/behavior_tree.h"
+#include "behaviortree_cpp_v3/bt_factory.h"
 
 using namespace BT;
 
@@ -62,7 +62,7 @@ int main()
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
 
-    haltAllActions(&root);
+    
 
     return 0;
 }

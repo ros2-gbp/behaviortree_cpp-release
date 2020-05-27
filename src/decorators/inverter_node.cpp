@@ -1,5 +1,5 @@
 /* Copyright (C) 2015-2018 Michele Colledanchise -  All Rights Reserved
- * Copyright (C) 2018 Davide Faconti -  All Rights Reserved
+ * Copyright (C) 2018-2020 Davide Faconti, Eurecat -  All Rights Reserved
 *
 *   Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"),
 *   to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense,
@@ -11,13 +11,14 @@
 *   WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-#include "behaviortree_cpp/decorators/inverter_node.h"
+#include "behaviortree_cpp_v3/decorators/inverter_node.h"
 
 namespace BT
 {
-InverterNode::InverterNode(const std::string& name) : DecoratorNode(name, NodeParameters())
+InverterNode::InverterNode(const std::string& name) :
+    DecoratorNode(name, {} )
 {
-    setRegistrationName("Inverter");
+    setRegistrationID("Inverter");
 }
 
 NodeStatus InverterNode::tick()
@@ -30,29 +31,25 @@ NodeStatus InverterNode::tick()
     {
         case NodeStatus::SUCCESS:
         {
-            setStatus(NodeStatus::FAILURE);
-            child_node_->setStatus(NodeStatus::IDLE);
+            return NodeStatus::FAILURE;
         }
-        break;
 
         case NodeStatus::FAILURE:
         {
-            setStatus(NodeStatus::SUCCESS);
-            child_node_->setStatus(NodeStatus::IDLE);
+            return NodeStatus::SUCCESS;
         }
-        break;
 
         case NodeStatus::RUNNING:
         {
-            setStatus(NodeStatus::RUNNING);
+            return NodeStatus::RUNNING;
         }
-        break;
 
         default:
         {
-            // TODO throw?
+            throw LogicError("A child node must never return IDLE");
         }
     }
-    return status();
+    //return status();
 }
+
 }

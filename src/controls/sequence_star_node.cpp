@@ -1,5 +1,5 @@
 /* Copyright (C) 2015-2018 Michele Colledanchise -  All Rights Reserved
- * Copyright (C) 2018 Davide Faconti -  All Rights Reserved
+ * Copyright (C) 2018-2020 Davide Faconti, Eurecat -  All Rights Reserved
 *
 *   Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"),
 *   to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense,
@@ -11,47 +11,21 @@
 *   WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 */
 
-#include "behaviortree_cpp/controls/sequence_star_node.h"
+#include "behaviortree_cpp_v3/controls/sequence_star_node.h"
 
 namespace BT
 {
 
-constexpr const char* SequenceStarNode::RESET_PARAM;
-
-SequenceStarNode::SequenceStarNode(const std::string& name, bool reset_on_failure)
-  : ControlNode::ControlNode(name, {{RESET_PARAM, std::to_string(reset_on_failure)}})
+SequenceStarNode::SequenceStarNode(const std::string& name)
+    : ControlNode::ControlNode(name, {} )
   , current_child_idx_(0)
-  , reset_on_failure_(reset_on_failure)
-  , read_parameter_from_blackboard_(false)
 {
-    setRegistrationName("SequenceStar");
-}
-
-SequenceStarNode::SequenceStarNode(const std::string& name, const NodeParameters& params)
-  : ControlNode::ControlNode(name, params), current_child_idx_(0),
-    read_parameter_from_blackboard_(false)
-{
-    read_parameter_from_blackboard_ = isBlackboardPattern( params.at(RESET_PARAM) );
-    if(!read_parameter_from_blackboard_)
-    {
-        if( !getParam(RESET_PARAM, reset_on_failure_) )
-        {
-            throw std::runtime_error("Missing parameter [reset_on_failure] in SequenceStarNode");
-        }
-    }
+    setRegistrationID("SequenceStar");
 }
 
 NodeStatus SequenceStarNode::tick()
 {
-    if(read_parameter_from_blackboard_)
-    {
-        if( !getParam(RESET_PARAM, reset_on_failure_) )
-        {
-            throw std::runtime_error("Missing parameter [reset_on_failure] in SequenceStarNode");
-        }
-    }
-
-    const unsigned children_count = children_nodes_.size();
+    const size_t children_count = children_nodes_.size();
 
     setStatus(NodeStatus::RUNNING);
 
@@ -68,15 +42,12 @@ NodeStatus SequenceStarNode::tick()
             }
             case NodeStatus::FAILURE:
             {
-                if (reset_on_failure_)
+                // DO NOT reset current_child_idx_ on failure
+                for(size_t i=current_child_idx_; i < childrenCount(); i++)
                 {
-                    haltChildren(0);
-                    current_child_idx_ = 0;
+                    haltChild(i);
                 }
-                else
-                {
-                    haltChildren(current_child_idx_);
-                }
+
                 return child_status;
             }
             case NodeStatus::SUCCESS:
@@ -87,7 +58,7 @@ NodeStatus SequenceStarNode::tick()
 
             case NodeStatus::IDLE:
             {
-                throw std::runtime_error("This is not supposed to happen");
+                throw LogicError("A child node must never return IDLE");
             }
         }   // end switch
     }       // end while loop
@@ -95,7 +66,7 @@ NodeStatus SequenceStarNode::tick()
     // The entire while loop completed. This means that all the children returned SUCCESS.
     if (current_child_idx_ == children_count)
     {
-        haltChildren(0);
+        haltChildren();
         current_child_idx_ = 0;
     }
     return NodeStatus::SUCCESS;
@@ -106,4 +77,5 @@ void SequenceStarNode::halt()
     current_child_idx_ = 0;
     ControlNode::halt();
 }
+
 }

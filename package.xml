@@ -1,8 +1,9 @@
-<package format="2">
-  <name>behaviortree_cpp</name>
-  <version>2.5.2</version>
+<?xml version="1.0"?>
+<package format="3">
+  <name>behaviortree_cpp_v3</name>
+  <version>3.5.0</version>
   <description>
-  This package provides a behavior trees core.
+  This package provides the Behavior Trees core library.
   </description>
 
   <maintainer email="davide.faconti@gmail.com">Davide Faconti</maintainer>
@@ -12,14 +13,18 @@
   <author>Michele Colledanchise</author>
   <author>Davide Faconti</author>
 
-  <build_depend>libzmq3-dev</build_depend>
-  <exec_depend>libzmq3-dev</exec_depend>
+  <buildtool_depend condition="$ROS_VERSION == 1">catkin</buildtool_depend>
+  <depend condition="$ROS_VERSION == 1">roslib</depend>
 
-  <test_depend>ament_cmake_gtest</test_depend>
+  <buildtool_depend condition="$ROS_VERSION == 2">ament_cmake</buildtool_depend>
+  <depend condition="$ROS_VERSION == 2">rclcpp</depend>
 
-  <buildtool_depend>ament_cmake</buildtool_depend>
+  <depend>libzmq3-dev</depend>
+  <depend>libncurses-dev</depend>
+
   <export>
-     <build_type>ament_cmake</build_type>
+      <build_type condition="$ROS_VERSION == 1">catkin</build_type>
+      <build_type condition="$ROS_VERSION == 2">ament_cmake</build_type>
   </export>
 
 </package>

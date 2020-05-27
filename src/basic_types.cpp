@@ -1,51 +1,80 @@
-#include "behaviortree_cpp/basic_types.h"
+#include "behaviortree_cpp_v3/basic_types.h"
 #include <cstdlib>
 #include <cstring>
+#include <clocale>
 
 namespace BT
 {
-const char* toStr(const NodeStatus& status, bool colored)
+
+template <>
+std::string toStr<NodeStatus>(NodeStatus status)
+{
+    switch (status)
+    {
+        case NodeStatus::SUCCESS:
+            return "SUCCESS";
+        case NodeStatus::FAILURE:
+            return "FAILURE";
+        case NodeStatus::RUNNING:
+            return "RUNNING";
+        case NodeStatus::IDLE:
+            return "IDLE";
+    }
+    return "";
+}
+
+std::string toStr(std::string value)
+{
+  return value;
+}
+
+std::string toStr(NodeStatus status, bool colored)
 {
     if (!colored)
     {
-        switch (status)
-        {
-            case NodeStatus::SUCCESS:
-                return "SUCCESS";
-            case NodeStatus::FAILURE:
-                return "FAILURE";
-            case NodeStatus::RUNNING:
-                return "RUNNING";
-            case NodeStatus::IDLE:
-                return "IDLE";
-        }
+        return toStr(status);
     }
     else
     {
         switch (status)
         {
             case NodeStatus::SUCCESS:
-                return ("\x1b[32m"
+                return "\x1b[32m"
                         "SUCCESS"
-                        "\x1b[0m");   // RED
+                        "\x1b[0m";   // RED
             case NodeStatus::FAILURE:
-                return ("\x1b[31m"
+                return "\x1b[31m"
                         "FAILURE"
-                        "\x1b[0m");   // GREEN
+                        "\x1b[0m";   // GREEN
             case NodeStatus::RUNNING:
-                return ("\x1b[33m"
+                return "\x1b[33m"
                         "RUNNING"
-                        "\x1b[0m");   // YELLOW
+                        "\x1b[0m";   // YELLOW
             case NodeStatus::IDLE:
-                return ("\x1b[36m"
+                return "\x1b[36m"
                         "IDLE"
-                        "\x1b[0m");   // CYAN
+                        "\x1b[0m";   // CYAN
         }
     }
     return "Undefined";
 }
 
-const char* toStr(const NodeType& type)
+
+
+template <>
+std::string toStr<PortDirection>(PortDirection direction)
+{
+    switch(direction)
+    {
+        case PortDirection::INPUT:  return "Input";
+        case PortDirection::OUTPUT: return "Output";
+        case PortDirection::INOUT:  return "InOut";
+    }
+    return "InOut";
+}
+
+
+template<> std::string toStr<NodeType>(NodeType type)
 {
     switch (type)
     {
@@ -64,38 +93,53 @@ const char* toStr(const NodeType& type)
     }
 }
 
+
 template <>
-std::string convertFromString<std::string>(const StringView& str)
+std::string convertFromString<std::string>(StringView str)
 {
     return std::string( str.data(), str.size() );
 }
 
+
 template <>
-const char* convertFromString<const char*>(const StringView& str)
+const char* convertFromString<const char*>(StringView str)
 {
-    return str.to_string().c_str();
+    return static_cast<std::string>(str).c_str();
 }
 
 template <>
-int convertFromString<int>(const StringView& str)
+int convertFromString<int>(StringView str)
 {
     return  std::stoi(str.data());
 }
 
 template <>
-unsigned convertFromString<unsigned>(const StringView& str)
+long convertFromString<long>(StringView str)
 {
-    return std::stoul(str.data());
+  return  std::stol(str.data());
 }
 
 template <>
-double convertFromString<double>(const StringView& str)
+unsigned convertFromString<unsigned>(StringView str)
 {
-    return std::stod(str.data());
+    return unsigned(std::stoul(str.data()));
 }
 
 template <>
-std::vector<int> convertFromString<std::vector<int>>(const StringView& str)
+double convertFromString<double>(StringView str)
+{
+    // see issue #120
+    // http://quick-bench.com/DWaXRWnxtxvwIMvZy2DxVPEKJnE
+
+    const auto old_locale = setlocale(LC_NUMERIC,nullptr);
+    setlocale(LC_NUMERIC,"C");
+    double val = std::stod(str.data());
+    setlocale(LC_NUMERIC,old_locale);
+    return val;
+}
+
+template <>
+std::vector<int> convertFromString<std::vector<int>>(StringView str)
 {
     auto parts = splitString(str, ';');
     std::vector<int> output;
@@ -109,7 +153,7 @@ std::vector<int> convertFromString<std::vector<int>>(const StringView& str)
 }
 
 template <>
-std::vector<double> convertFromString<std::vector<double>>(const StringView& str)
+std::vector<double> convertFromString<std::vector<double>>(StringView str)
 {
     auto parts = splitString(str, ';');
     std::vector<double> output;
@@ -123,7 +167,7 @@ std::vector<double> convertFromString<std::vector<double>>(const StringView& str
 }
 
 template <>
-bool convertFromString<bool>(const StringView& str)
+bool convertFromString<bool>(StringView str)
 {
     if (str.size() == 1)
     {
@@ -131,13 +175,9 @@ bool convertFromString<bool>(const StringView& str)
         {
             return false;
         }
-        else if (str[0] == '1')
+        if (str[0] == '1')
         {
             return true;
-        }
-        else
-        {
-            std::runtime_error("invalid bool conversion");
         }
     }
     else if (str.size() == 4)
@@ -146,10 +186,6 @@ bool convertFromString<bool>(const StringView& str)
         {
             return true;
         }
-        else
-        {
-            std::runtime_error("invalid bool conversion");
-        }
     }
     else if (str.size() == 5)
     {
@@ -157,43 +193,39 @@ bool convertFromString<bool>(const StringView& str)
         {
             return false;
         }
-        else
-        {
-            std::runtime_error("invalid bool conversion");
-        }
     }
-
-    std::runtime_error("invalid bool conversion");
-    return false;
+    throw RuntimeError("convertFromString(): invalid bool conversion");
 }
 
 template <>
-NodeStatus convertFromString<NodeStatus>(const StringView& str)
+NodeStatus convertFromString<NodeStatus>(StringView str)
 {
-    for (auto status :
-         {NodeStatus::IDLE, NodeStatus::RUNNING, NodeStatus::SUCCESS, NodeStatus::FAILURE})
-    {
-        if ( StringView(toStr(status)) == str )
-        {
-            return status;
-        }
-    }
-    throw std::invalid_argument(std::string("Cannot convert this to NodeStatus: ") + str.to_string() );
+    if( str == "IDLE" )    return NodeStatus::IDLE;
+    if( str == "RUNNING" ) return NodeStatus::RUNNING;
+    if( str == "SUCCESS" ) return NodeStatus::SUCCESS;
+    if( str == "FAILURE" ) return NodeStatus::FAILURE;
+    throw RuntimeError(std::string("Cannot convert this to NodeStatus: ") + static_cast<std::string>(str) );
 }
 
 template <>
-NodeType convertFromString<NodeType>(const StringView& str)
+NodeType convertFromString<NodeType>(StringView str)
 {
-    for (auto status : {NodeType::ACTION, NodeType::CONDITION, NodeType::CONTROL,
-                        NodeType::DECORATOR, NodeType::SUBTREE, NodeType::UNDEFINED})
-    {
-        if (StringView(toStr(status)) == str)
-        {
-            return status;
-        }
-    }
-    throw std::invalid_argument(std::string("Cannot convert this to NodeType: ") + str.to_string());
+    if( str == "Action" )    return NodeType::ACTION;
+    if( str == "Condition" ) return NodeType::CONDITION;
+    if( str == "Control" )   return NodeType::CONTROL;
+    if( str == "Decorator" ) return NodeType::DECORATOR;
+    if( str == "SubTree" || str == "SubTreePlus" ) return NodeType::SUBTREE;
+    return NodeType::UNDEFINED;
 }
+
+template <>
+PortDirection convertFromString<PortDirection>(StringView str)
+{
+    if( str == "Input"  || str == "INPUT" )    return PortDirection::INPUT;
+    if( str == "Output" || str == "OUTPUT")    return PortDirection::OUTPUT;
+    return PortDirection::INOUT;
+}
+
 
 std::ostream& operator<<(std::ostream& os, const NodeType& type)
 {
@@ -204,6 +236,12 @@ std::ostream& operator<<(std::ostream& os, const NodeType& type)
 std::ostream& operator<<(std::ostream& os, const NodeStatus& status)
 {
     os << toStr(status);
+    return os;
+}
+
+std::ostream& operator<<(std::ostream& os, const PortDirection& type)
+{
+    os << toStr(type);
     return os;
 }
 
@@ -226,5 +264,55 @@ std::vector<StringView> splitString(const StringView &strToSplit, char delimeter
     }
     return splitted_strings;
 }
+
+PortDirection PortInfo::direction() const
+{
+    return _type;
+}
+
+const std::type_info* PortInfo::type() const
+{
+    return _info;
+}
+
+Any PortInfo::parseString(const char *str) const
+{
+    if( _converter)
+    {
+        return _converter(str);
+    }
+    return {};
+}
+
+Any PortInfo::parseString(const std::string &str) const
+{
+    if( _converter)
+    {
+        return _converter(str);
+    }
+    return {};
+}
+
+void PortInfo::setDescription(StringView description)
+{
+    description_ = static_cast<std::string>(description);
+}
+
+void PortInfo::setDefaultValue(StringView default_value_as_string)
+{
+    default_value_ = static_cast<std::string>(default_value_as_string);
+}
+
+const std::string &PortInfo::description() const
+{
+    return  description_;
+}
+
+const std::string &PortInfo::defaultValue() const
+{
+    return  default_value_;
+}
+
+
 
 }   // end namespace

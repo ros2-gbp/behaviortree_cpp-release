@@ -1,27 +1,37 @@
-#include "behaviortree_cpp/decorators/subtree_node.h"
+#include "behaviortree_cpp_v3/decorators/subtree_node.h"
 
 
-BT::DecoratorSubtreeNode::DecoratorSubtreeNode(const std::string &name) :
-  DecoratorNode(name, NodeParameters())
+BT::SubtreeNode::SubtreeNode(const std::string &name) :
+    DecoratorNode(name, {} )
 {
-    setRegistrationName("SubTree");
+    setRegistrationID("SubTree");
 }
 
-BT::NodeStatus BT::DecoratorSubtreeNode::tick()
+BT::NodeStatus BT::SubtreeNode::tick()
 {
     NodeStatus prev_status = status();
     if (prev_status == NodeStatus::IDLE)
     {
         setStatus(NodeStatus::RUNNING);
     }
-    auto status = child_node_->executeTick();
-    setStatus(status);
+    return child_node_->executeTick();
+}
 
-    // reset child if completed
-    if( status == NodeStatus::SUCCESS || status == NodeStatus::FAILURE)
+
+//--------------------------------
+BT::SubtreePlusNode::SubtreePlusNode(const std::string &name) :
+     DecoratorNode(name, {} )
+{
+  setRegistrationID("SubTreePlus");
+}
+
+BT::NodeStatus BT::SubtreePlusNode::tick()
+{
+    NodeStatus prev_status = status();
+    if (prev_status == NodeStatus::IDLE)
     {
-        child_node_->setStatus(NodeStatus::IDLE);
+        setStatus(NodeStatus::RUNNING);
     }
-    return status;
+    return child_node_->executeTick();
 }
 
