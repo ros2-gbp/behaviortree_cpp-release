@@ -1,1 +1,1 @@
-{"base": "96d5637", "parent": "debian/rolling/behaviortree_cpp_v3", "previous": "545dc72", "trim": "", "trimbase": ""}
+{"base": "b1bd050", "parent": "debian/galactic/behaviortree_cpp_v3", "previous": "6cd79a5", "trim": "", "trimbase": ""}
