@@ -1,6 +1,7 @@
 ﻿#include <gtest/gtest.h>
 #include "behaviortree_cpp_v3/bt_factory.h"
 #include "../sample_nodes/dummy_nodes.h"
+#include "../sample_nodes/movebase_node.h"
 
 using namespace BT;
 
@@ -329,34 +330,34 @@ public:
   }
 };
 
-TEST(SubTree, SubtreeIssue563)
+TEST(SubTree, SubtreeNav2_Issue563)
 {
   static const char* xml_text = R"(
 <root main_tree_to_execute="Tree1">
 
-<BehaviorTree ID="Tree1">
-  <Sequence>
-    <SetBlackboard output_key="the_message" value="hello world"/>
-    <SubTreePlus ID="Tree2" __autoremap="true"/>
-    <SaySomething message="{reply}" />
-  </Sequence>
-</BehaviorTree>
+    <BehaviorTree ID="Tree1">
+      <Sequence>
+        <SetBlackboard output_key="the_message" value="hello world"/>
+        <SubTreePlus ID="Tree2" __autoremap="true"/>
+        <SaySomething message="{reply}" />
+      </Sequence>
+    </BehaviorTree>
 
-<BehaviorTree ID="Tree2">
-    <SubTreePlus ID="Tree3" __autoremap="true"/>
-</BehaviorTree>
+    <BehaviorTree ID="Tree2">
+        <SubTreePlus ID="Tree3" __autoremap="true"/>
+    </BehaviorTree>
 
-<BehaviorTree ID="Tree3">
-    <SubTreePlus ID="Talker" __autoremap="true"/>
-</BehaviorTree>
+    <BehaviorTree ID="Tree3">
+        <SubTreePlus ID="Talker" __autoremap="true"/>
+    </BehaviorTree>
 
-<BehaviorTree ID="Talker">
-  <Sequence>
-    <SaySomething message="{the_message}" />
-    <SetBlackboard output_key="reply" value="done"/>
-    <NaughtyNav2Node/>
-  </Sequence>
-</BehaviorTree>
+    <BehaviorTree ID="Talker">
+      <Sequence>
+        <SaySomething message="{the_message}" />
+        <SetBlackboard output_key="reply" value="done"/>
+        <NaughtyNav2Node/>
+      </Sequence>
+    </BehaviorTree>
 
 </root>)";
 
@@ -371,4 +372,118 @@ TEST(SubTree, SubtreeIssue563)
 
   auto ret = tree.tickRoot();
   ASSERT_EQ(ret, NodeStatus::SUCCESS);
+}
+
+TEST(SubTree, SubtreeNav2_Issue724)
+{
+  static const char* xml_text = R"(
+<root main_tree_to_execute="Tree1">
+
+    <BehaviorTree ID="Tree1">
+      <Sequence>
+        <SubTreePlus ID="Tree2" ros_node="{ros_node}"/>
+      </Sequence>
+    </BehaviorTree>
+
+    <BehaviorTree ID="Tree2">
+        <SubTreePlus ID="Tree3" ros_node="{ros_node}"/>
+    </BehaviorTree>
+
+    <BehaviorTree ID="Tree3">
+        <SubTreePlus ID="Talker" ros_node="{ros_node}"/>
+    </BehaviorTree>
+
+    <BehaviorTree ID="Talker">
+      <Sequence>
+        <NaughtyNav2Node/>
+      </Sequence>
+    </BehaviorTree>
+
+</root>)";
+
+  BehaviorTreeFactory factory;
+  factory.registerNodeType<NaughtyNav2Node>("NaughtyNav2Node");
+
+  factory.registerBehaviorTreeFromText(xml_text);
+
+  auto blackboard = BT::Blackboard::create();
+  blackboard->set<std::string>("ros_node", "nav2_shouldnt_do_this");
+
+  Tree tree = factory.createTreeFromText(xml_text, blackboard);
+
+  auto ret = tree.tickRoot();
+  ASSERT_EQ(ret, NodeStatus::SUCCESS);
+}
+
+TEST(SubTree, String_to_Pose_Issue623)
+{
+  // clang-format off
+
+  static const char* xml_text = R"(
+<root main_tree_to_execute="Test">
+  <BehaviorTree ID="Test">
+    <ReactiveSequence name="MainSequence">
+      <SubTreePlus name="Visit2" ID="Visit2" tl1="1;2;3"/>
+    </ReactiveSequence>
+  </BehaviorTree>
+  <BehaviorTree ID="Visit2">
+    <Sequence name="Visit2MainSequence">
+      <Action name="MoveBase" ID="MoveBase" goal="{tl1}"/>
+    </Sequence>
+  </BehaviorTree>
+</root>
+ )";
+
+  // clang-format on
+
+  BehaviorTreeFactory factory;
+  factory.registerNodeType<MoveBaseAction>("MoveBase");
+  auto tree = factory.createTreeFromText(xml_text);
+  tree.tickRootWhileRunning();
+}
+
+class Assert : public BT::SyncActionNode
+{
+public:
+  Assert(const std::string& name, const BT::NodeConfiguration& config)
+    : BT::SyncActionNode(name, config) {}
+
+  static BT::PortsList providedPorts() {
+    return {BT::InputPort<bool>("condition")};
+  }
+
+private:
+  virtual BT::NodeStatus tick() override {
+    if (getInput<bool>("condition").value())
+      return BT::NodeStatus::SUCCESS;
+    else
+      return BT::NodeStatus::FAILURE;
+  }
+};
+
+TEST(SubTree, Issue653_SetBlackboard)
+{
+  // clang-format off
+
+  static const char* xml_text = R"(
+<root main_tree_to_execute = "MainTree">
+  <BehaviorTree ID="MainTree">
+    <Sequence>
+      <SubTreePlus ID="Init" test="{test}" />
+      <Assert condition="{test}" />
+    </Sequence>
+  </BehaviorTree>
+
+  <BehaviorTree ID="Init">
+    <SetBlackboard output_key="test" value="true"/>
+  </BehaviorTree>
+</root>
+ )";
+
+  // clang-format on
+
+  BehaviorTreeFactory factory;
+  factory.registerNodeType<Assert>("Assert");
+  auto tree = factory.createTreeFromText(xml_text);
+  tree.tickRootWhileRunning();
 }
