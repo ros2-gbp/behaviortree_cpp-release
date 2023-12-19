@@ -1,3 +1,26 @@
+## behaviortree_cpp_v3 (rolling) - 3.8.6-1
+
+The packages in the `behaviortree_cpp_v3` repository were released into the `rolling` distro by running `/usr/bin/bloom-release --rosdistro rolling behaviortree_cpp_v3 -y` on `Tue, 19 Dec 2023 08:31:11 -0000`
+
+The `behaviortree_cpp_v3` package was released.
+
+Version of package(s) in repository `behaviortree_cpp_v3`:
+
+- upstream repository: https://github.com/BehaviorTree/BehaviorTree.CPP.git
+- release repository: https://github.com/ros2-gbp/behaviortree_cpp-release.git
+- rosdistro version: `3.8.4-1`
+- old version: `3.8.4-1`
+- new version: `3.8.6-1`
+
+Versions of tools used:
+
+- bloom version: `0.11.2`
+- catkin_pkg version: `1.0.0`
+- rosdep version: `0.22.2`
+- rosdistro version: `0.9.0`
+- vcstools version: `0.1.42`
+
+
 ## behaviortree_cpp_v3 (iron) - 3.8.6-1
 
 The packages in the `behaviortree_cpp_v3` repository were released into the `iron` distro by running `/usr/bin/bloom-release --rosdistro iron behaviortree_cpp_v3 -y` on `Tue, 19 Dec 2023 08:28:07 -0000`
