@@ -216,11 +216,7 @@ using Optional = nonstd::expected<T, std::string>;
  * */
 using Result = Optional<void>;
 
-inline bool IsReservedPortname(StringView name)
-{
-  return name == "ID" || name == "name" || name == "_description";
-}
-
+const std::unordered_set<std::string> ReservedPortNames = {"ID", "name", "_description"};
 
 class PortInfo
 {
@@ -275,7 +271,7 @@ std::pair<std::string, PortInfo> CreatePort(PortDirection direction, StringView 
                                             StringView description = {})
 {
   auto sname = static_cast<std::string>(name);
-  if (IsReservedPortname(sname))
+  if (ReservedPortNames.count(sname) != 0)
   {
     throw std::runtime_error("A port can not use a reserved name. See ReservedPortNames");
   }

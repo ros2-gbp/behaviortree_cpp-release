@@ -14,22 +14,9 @@
 
 namespace BT
 {
-
-bool ReactiveFallback::throw_if_multiple_running = false;
-
-void ReactiveFallback::EnableException(bool enable)
-{
-  ReactiveFallback::throw_if_multiple_running = enable;
-}
-
 NodeStatus ReactiveFallback::tick()
 {
   size_t failure_count = 0;
-  if(status() == NodeStatus::IDLE)
-  {
-    running_child_ = -1;
-  }
-  setStatus(NodeStatus::RUNNING);
 
   for (size_t index = 0; index < childrenCount(); index++)
   {
@@ -39,23 +26,12 @@ NodeStatus ReactiveFallback::tick()
     switch (child_status)
     {
       case NodeStatus::RUNNING: {
-        // reset the previous children, to make sure that they are
-        // in IDLE state the next time we tick them
-        for (size_t i = 0; i < childrenCount(); i++)
+
+        // reset the previous children, to make sure that they are in IDLE state
+        // the next time we tick them
+        for (size_t i = 0; i < index; i++)
         {
-          if(i != index)
-          {
-            haltChild(i);
-          }
-        }
-        if(running_child_ == -1)
-        {
-          running_child_ = int(index);
-        }
-        else if(throw_if_multiple_running && running_child_ != int(index))
-        {
-          throw LogicError("[ReactiveFallback]: only a single child can return RUNNING.\n"
-                           "This throw can be disabled with ReactiveFallback::EnableException(false)");
+          haltChild(i);
         }
         return NodeStatus::RUNNING;
       }
@@ -83,12 +59,6 @@ NodeStatus ReactiveFallback::tick()
   }
 
   return NodeStatus::RUNNING;
-}
-
-void ReactiveFallback::halt()
-{
-  running_child_ = -1;
-  ControlNode::halt();
 }
 
 }   // namespace BT

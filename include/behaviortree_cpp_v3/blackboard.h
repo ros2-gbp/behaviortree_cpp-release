@@ -178,6 +178,7 @@ public:
     createEntryImpl(key, info);
   }
 
+private:
   struct Entry
   {
     Any value;
@@ -187,17 +188,9 @@ public:
     {}
 
     Entry(Any&& other_any, const PortInfo& info) :
-        value(std::move(other_any)), port_info(info)
+      value(std::move(other_any)), port_info(info)
     {}
   };
-
-  std::shared_ptr<Entry> getEntry(const std::string& key) const
-  {
-    auto it = storage_.find(key);
-    return it == storage_.end() ? std::shared_ptr<Entry>() : it->second;
-  }
-
-private:
 
   std::shared_ptr<Entry> createEntryImpl(const std::string& key, const PortInfo& info);
 
