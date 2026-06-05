@@ -5,8 +5,8 @@ project(behaviortree_cpp_v3)
 set(CMAKE_CONFIG_PATH ${CMAKE_MODULE_PATH}  "${CMAKE_CURRENT_LIST_DIR}/cmake")
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CONFIG_PATH}")
 
-#---- Enable C++14 ----
-set(CMAKE_CXX_STANDARD 14)
+#---- Enable C++17 ----
+set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 if(MSVC)
@@ -250,6 +250,7 @@ if(ament_cmake_FOUND)
 
     ament_export_include_directories(include)
     ament_export_libraries(${BEHAVIOR_TREE_LIBRARY})
+    ament_export_targets(${BEHAVIOR_TREE_LIBRARY}Targets)
     ament_package()
 elseif(catkin_FOUND)
 
